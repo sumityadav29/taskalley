@@ -1,0 +1,242 @@
+openapi: 3.0.3
+info:
+  title: taskalley
+  version: 1.0.0
+  description: RESTful API for managing tasks and projects
+
+servers:
+  - url: http://localhost:8080/
+    description: local
+
+tags:
+  - name: Tasks
+    description: Operations related to tasks
+  - name: Projects
+    description: Operations related to projects
+
+paths:
+  /api/v1/projects:
+    get:
+      tags:
+        - Projects
+      summary: Get all projects for an user
+      responses:
+        200:
+          description: A list of projects
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Project'
+
+    post:
+      tags:
+        - Projects
+      summary: Create a new project
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProjectCreate'
+      responses:
+        201:
+          description: Project created
+
+  /api/v1/projects/{projectId}/tasks:
+    get:
+      tags:
+        - Tasks
+      summary: Get all tasks in a project
+      parameters:
+        - in: path
+          name: projectId
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: A list of tasks in a project
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Task'
+
+    post:
+      tags:
+        - Tasks
+      summary: Create a task in a project
+      parameters:
+        - in: path
+          name: projectId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskCreate'
+      responses:
+        201:
+          description: Task created
+
+  /api/v1/projects/{projectId}/tasks/{taskId}:
+    get:
+      tags:
+        - Tasks
+      summary: Get task details
+      parameters:
+        - in: path
+          name: projectId
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: taskId
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Task details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+
+    put:
+      tags:
+        - Tasks
+      summary: Update a task
+      parameters:
+        - in: path
+          name: projectId
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: taskId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskUpdate'
+      responses:
+        200:
+          description: Task updated
+
+    delete:
+      tags:
+        - Tasks
+      summary: Delete a task
+      parameters:
+        - in: path
+          name: projectId
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: taskId
+          required: true
+          schema:
+            type: string
+      responses:
+        204:
+          description: Task deleted
+
+components:
+  schemas:
+    Project:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        createdBy:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    ProjectCreate:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+
+    Task:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [TODO, IN_PROGRESS, COMPLETED]
+        createdBy:
+          type: string
+        dueDate:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    TaskCreate:
+      type: object
+      required: [title]
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [TODO, IN_PROGRESS, COMPLETED]
+        createdBy:
+          type: string
+        dueDate:
+          type: string
+          format: date-time
+
+    TaskUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [TODO, IN_PROGRESS, COMPLETED]
+        createdBy:
+          type: string
+        dueDate:
+          type: string
+          format: date-time
+
+
