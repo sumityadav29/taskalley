@@ -10,6 +10,7 @@ import (
 
 	"github.com/sumityadav29/taskalley/config"
 	"github.com/sumityadav29/taskalley/internal/project"
+	"github.com/sumityadav29/taskalley/internal/task"
 )
 
 func main() {
@@ -25,9 +26,13 @@ func main() {
 	projectService := project.NewService(projectRepo)
 	projectHandler := project.NewHandler(projectService)
 
+	taskRepo := task.NewRepository(dbPool)
+	taskService := task.NewService(taskRepo)
+	taskHandler := task.NewHandler(taskService)
+
 	r := chi.NewRouter()
 	projectHandler.RegisterRoutes(r)
-
+	taskHandler.RegisterRoutes(r)
 	log.Printf("starting server on port %s", cfg.Port)
 	if err := http.ListenAndServe(":"+cfg.Port, r); err != nil {
 		log.Fatalf("server error: %v", err)

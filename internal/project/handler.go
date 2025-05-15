@@ -49,11 +49,6 @@ func (h *Handler) createProject(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if projectCreate.Name == "" {
-		http.Error(w, "project name is required", http.StatusBadRequest)
-		return
-	}
-
 	project, err := h.service.CreateProject(r.Context(), &projectCreate)
 	if err != nil {
 		http.Error(w, "failed to create project: "+err.Error(), http.StatusInternalServerError)
