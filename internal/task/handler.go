@@ -23,6 +23,7 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 	})
 	r.Route("/api/v1/projects/{projectId}/tasks/{taskId}", func(r chi.Router) {
 		r.Get("/", h.GetById)
+		r.Delete("/", h.DeleteById)
 	})
 }
 
@@ -106,4 +107,22 @@ func (h *Handler) GetById(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(task)
+}
+
+func (h *Handler) DeleteById(w http.ResponseWriter, r *http.Request) {
+	taskId := chi.URLParam(r, "taskId")
+
+	if taskId == "" {
+		http.Error(w, "taskId is required", http.StatusBadRequest)
+		return
+	}
+
+	err := h.service.DeleteById(r.Context(), taskId)
+
+	if err != nil {
+		http.Error(w, "failed to delete task: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
 }

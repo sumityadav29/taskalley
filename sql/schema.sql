@@ -11,7 +11,8 @@ CREATE TABLE projects (
                           description TEXT,
                           created_by INTEGER NOT NULL,
                           created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-                          updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+                          updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+                          is_deleted BOOLEAN NOT NULL DEFAULT FALSE
 );
 
 -- Tasks table
@@ -24,5 +25,6 @@ CREATE TABLE tasks (
                        created_by INTEGER NOT NULL,
                        due_date TIMESTAMP,
                        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-                       updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+                       updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+                       is_deleted BOOLEAN NOT NULL DEFAULT FALSE
 );

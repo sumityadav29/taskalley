@@ -14,7 +14,7 @@ type Repository interface {
 	GetAllByFilters(ctx context.Context, filters []taskfilters.TaskFilter, start int, limit int) ([]*Task, error)
 	GetById(ctx context.Context, id string) (*Task, error)
 	// UpdateById(ctx context.Context, id string, task *Task) (*Task, error)
-	// DeleteById(ctx context.Context, id string) error
+	DeleteById(ctx context.Context, id string) error
 }
 
 type repository struct {
@@ -60,10 +60,12 @@ func (r *repository) Create(ctx context.Context, task *TaskCreate) (*Task, error
 
 func (r *repository) GetAllByFilters(ctx context.Context, filters []taskfilters.TaskFilter, start int, limit int) ([]*Task, error) {
 	query := `
-		SELECT id, project_id, title, description, status, due_date, created_by, created_at, updated_at FROM tasks
+		SELECT id, project_id, title, description, status, due_date, created_by, created_at, updated_at
+		 FROM tasks 
+		 WHERE is_deleted = false
 	`
 	if len(filters) > 0 {
-		query += " WHERE "
+		query += " AND "
 		for i, filter := range filters {
 			query += filter.GetQueryClause()
 			if i < len(filters)-1 {
@@ -95,7 +97,9 @@ func (r *repository) GetAllByFilters(ctx context.Context, filters []taskfilters.
 
 func (r *repository) GetById(ctx context.Context, id string) (*Task, error) {
 	row := r.db.QueryRow(ctx, `
-		SELECT id, project_id, title, description, status, due_date, created_by, created_at, updated_at FROM tasks WHERE id = $1
+		SELECT id, project_id, title, description, status, due_date, created_by, created_at, updated_at
+		 FROM tasks 
+		 WHERE id = $1 AND is_deleted = false
 	`, id)
 
 	var task Task
@@ -104,4 +108,14 @@ func (r *repository) GetById(ctx context.Context, id string) (*Task, error) {
 		return nil, err
 	}
 	return &task, nil
+}
+
+func (r *repository) DeleteById(ctx context.Context, id string) error {
+	_, err := r.db.Exec(ctx, `
+		UPDATE tasks SET is_deleted = true WHERE id = $1
+	`, id)
+	if err != nil {
+		return err
+	}
+	return nil
 }
