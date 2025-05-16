@@ -1,4 +1,4 @@
-FROM golang:1.21-alpine
+FROM golang:1.22.4-alpine
 
 WORKDIR /app
 
@@ -15,7 +15,7 @@ COPY . .
 RUN go build -o main ./cmd/server
 
 # Expose port
-EXPOSE 8080
+EXPOSE 8888
 
 # Command to run the executable
 CMD ["./main"]
