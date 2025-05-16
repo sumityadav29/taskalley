@@ -19,6 +19,12 @@ paths:
     get:
       tags:
         - Projects
+      parameters:
+        - in: query
+          name: userId
+          required: true
+          schema:
+            type: string
       summary: Get all projects for an user
       responses:
         200:
@@ -79,6 +85,11 @@ paths:
       parameters:
         - in: path
           name: projectId
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: userId
           required: true
           schema:
             type: string
