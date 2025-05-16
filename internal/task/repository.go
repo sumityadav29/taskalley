@@ -12,7 +12,7 @@ import (
 type Repository interface {
 	Create(ctx context.Context, task *TaskCreate) (*Task, error)
 	GetAllByFilters(ctx context.Context, filters []taskfilters.TaskFilter, start int, limit int) ([]*Task, error)
-	// GetById(ctx context.Context, id string) (*Task, error)
+	GetById(ctx context.Context, id string) (*Task, error)
 	// UpdateById(ctx context.Context, id string, task *Task) (*Task, error)
 	// DeleteById(ctx context.Context, id string) error
 }
@@ -91,4 +91,17 @@ func (r *repository) GetAllByFilters(ctx context.Context, filters []taskfilters.
 	}
 
 	return tasks, nil
+}
+
+func (r *repository) GetById(ctx context.Context, id string) (*Task, error) {
+	row := r.db.QueryRow(ctx, `
+		SELECT id, project_id, title, description, status, due_date, created_by, created_at, updated_at FROM tasks WHERE id = $1
+	`, id)
+
+	var task Task
+	err := row.Scan(&task.Id, &task.ProjectId, &task.Title, &task.Description, &task.Status, &task.DueDate, &task.CreatedBy, &task.CreatedAt, &task.UpdatedAt)
+	if err != nil {
+		return nil, err
+	}
+	return &task, nil
 }

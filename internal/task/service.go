@@ -10,6 +10,7 @@ import (
 type Service interface {
 	Create(ctx context.Context, task *TaskCreate, userId string) (*Task, error)
 	GetAllByProject(ctx context.Context, projectId string, status Status, start int, limit int) ([]*Task, error)
+	GetById(ctx context.Context, id string) (*Task, error)
 }
 
 type service struct {
@@ -65,4 +66,11 @@ func (s *service) GetAllByProject(ctx context.Context, projectId string, status 
 	}
 
 	return s.repo.GetAllByFilters(ctx, filters, start, limit)
+}
+
+func (s *service) GetById(ctx context.Context, id string) (*Task, error) {
+	if id == "" {
+		return nil, errors.New("id is required")
+	}
+	return s.repo.GetById(ctx, id)
 }

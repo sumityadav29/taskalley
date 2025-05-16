@@ -21,6 +21,9 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 		r.Post("/", h.Create)
 		r.Get("/", h.GetAllByProject)
 	})
+	r.Route("/api/v1/projects/{projectId}/tasks/{taskId}", func(r chi.Router) {
+		r.Get("/", h.GetById)
+	})
 }
 
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
@@ -83,4 +86,24 @@ func (h *Handler) GetAllByProject(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(tasks)
+}
+
+func (h *Handler) GetById(w http.ResponseWriter, r *http.Request) {
+	taskId := chi.URLParam(r, "taskId")
+
+	if taskId == "" {
+		http.Error(w, "taskId is required", http.StatusBadRequest)
+		return
+	}
+
+	task, err := h.service.GetById(r.Context(), taskId)
+
+	if err != nil {
+		http.Error(w, "failed to get task: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(task)
 }
