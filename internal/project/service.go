@@ -3,6 +3,8 @@ package project
 import (
 	"context"
 	"errors"
+
+	"github.com/sumityadav29/taskalley/internal/applicationevents"
 )
 
 type Service interface {
@@ -11,11 +13,12 @@ type Service interface {
 }
 
 type service struct {
-	repo Repository
+	repo     Repository
+	eventBus *applicationevents.EventBus
 }
 
-func NewService(repo Repository) Service {
-	return &service{repo: repo}
+func NewService(repo Repository, eventBus *applicationevents.EventBus) Service {
+	return &service{repo: repo, eventBus: eventBus}
 }
 
 func (s *service) CreateProject(ctx context.Context, projectCreate *ProjectCreate) (*Project, error) {
@@ -23,7 +26,13 @@ func (s *service) CreateProject(ctx context.Context, projectCreate *ProjectCreat
 		return nil, errors.New("project name is required")
 	}
 
-	return s.repo.Create(ctx, projectCreate)
+	project, err := s.repo.Create(ctx, projectCreate)
+	if err != nil {
+		return nil, err
+	}
+
+	s.eventBus.Publish(applicationevents.ProjectCreated, project)
+	return project, nil
 }
 
 func (s *service) GetAllProjectsByUser(ctx context.Context, userId string) ([]*Project, error) {
