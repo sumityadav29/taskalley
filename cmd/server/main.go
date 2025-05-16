@@ -51,5 +51,12 @@ func wireApplication(dbPool *pgxpool.Pool) (*chi.Mux, error) {
 	projectHandler.RegisterRoutes(server)
 	taskHandler.RegisterRoutes(server)
 
+	ServeDocs(server)
+
 	return server, nil
+}
+
+func ServeDocs(r chi.Router) {
+	fs := http.FileServer(http.Dir("./static/docs"))
+	r.Handle("/docs/*", http.StripPrefix("/docs/", fs))
 }
