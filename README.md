@@ -45,7 +45,7 @@ The service uses a simple Postgres database to persist Projects and Tasks, schem
 
 ## API spec
 
-*(To be provided / See `static/docs/openapi.yaml`)*
+rendered at https://sumityadav29.github.io/taskalley/
 
 ---
 
