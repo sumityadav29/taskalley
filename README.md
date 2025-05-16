@@ -1,6 +1,11 @@
 # TaskAlley
 
 ## Running the service locally
+run `docker-compose up` in project root directory
+
+This will start two containers
+    1. service
+    2. postgres with seed data
 
 ---
 
