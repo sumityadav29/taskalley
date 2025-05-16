@@ -9,6 +9,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/sumityadav29/taskalley/config"
+	"github.com/sumityadav29/taskalley/internal/middlewares"
 	"github.com/sumityadav29/taskalley/internal/project"
 	"github.com/sumityadav29/taskalley/internal/task"
 )
@@ -31,6 +32,8 @@ func NewServer() http.Handler {
 	taskHandler := task.NewHandler(taskService)
 
 	r := chi.NewRouter()
+
+	r.Use(middlewares.AuthMiddleware)
 
 	projectHandler.RegisterRoutes(r)
 	taskHandler.RegisterRoutes(r)
