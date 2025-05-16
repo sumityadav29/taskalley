@@ -43,7 +43,7 @@ func wireApplication(dbPool *pgxpool.Pool) (*chi.Mux, error) {
 	projectHandler := project.NewHandler(projectService)
 
 	taskRepo := task.NewRepository(dbPool)
-	taskService := task.NewService(taskRepo)
+	taskService := task.NewService(taskRepo, eventBus)
 	taskHandler := task.NewHandler(taskService)
 
 	server := chi.NewRouter()

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/sumityadav29/taskalley/internal/applicationevents"
 	"github.com/sumityadav29/taskalley/internal/task/taskfilters"
 )
 
@@ -17,33 +18,41 @@ type Service interface {
 }
 
 type service struct {
-	repo Repository
+	repo     Repository
+	eventBus *applicationevents.EventBus
 }
 
-func NewService(repo Repository) Service {
-	return &service{repo: repo}
+func NewService(repo Repository, eventBus *applicationevents.EventBus) Service {
+	return &service{repo: repo, eventBus: eventBus}
 }
 
-func (s *service) Create(ctx context.Context, task *TaskCreate, userId string) (*Task, error) {
-	if task.ProjectId == "" {
+func (s *service) Create(ctx context.Context, taskCreate *TaskCreate, userId string) (*Task, error) {
+	if taskCreate.ProjectId == "" {
 		return nil, errors.New("projectId is required")
 	}
 
-	if task.Title == "" {
+	if taskCreate.Title == "" {
 		return nil, errors.New("title is required")
 	}
 
-	if task.DueDate.IsZero() {
+	if taskCreate.DueDate.IsZero() {
 		return nil, errors.New("dueDate is required")
 	}
 
 	if userId == "" {
 		return nil, errors.New("userId is required")
-	} else {
-		task.CreatedBy = userId
 	}
 
-	return s.repo.Create(ctx, task)
+	createdTask, err := s.repo.Create(ctx, taskCreate)
+	if err != nil {
+		return nil, err
+	}
+
+	createdTask.CreatedBy = userId
+
+	s.eventBus.Publish(applicationevents.TaskCreated, createdTask)
+
+	return createdTask, nil
 }
 
 func (s *service) GetAllByProject(ctx context.Context, projectId string, status Status, start int, limit int) ([]*Task, error) {
@@ -82,14 +91,29 @@ func (s *service) DeleteById(ctx context.Context, id string) error {
 	if id == "" {
 		return errors.New("id is required")
 	}
-	return s.repo.DeleteById(ctx, id)
+
+	err := s.repo.DeleteById(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	s.eventBus.Publish(applicationevents.TaskDeleted, id)
+
+	return nil
 }
 
 func (s *service) UpdateById(ctx context.Context, id string, task *TaskUpdate) (*Task, error) {
 	if id == "" {
 		return nil, errors.New("id is required")
 	}
-	return s.repo.UpdateById(ctx, id, task)
+
+	updatedTask, err := s.repo.UpdateById(ctx, id, task)
+	if err != nil {
+		return nil, err
+	}
+
+	s.eventBus.Publish(applicationevents.TaskUpdated, updatedTask)
+	return updatedTask, nil
 }
 
 func (s *service) UpdateStatus(ctx context.Context, id string, status Status) (*Task, error) {
@@ -101,5 +125,11 @@ func (s *service) UpdateStatus(ctx context.Context, id string, status Status) (*
 		return nil, errors.New("status is required")
 	}
 
-	return s.repo.UpdateStatus(ctx, id, status)
+	updatedTask, err := s.repo.UpdateStatus(ctx, id, status)
+	if err != nil {
+		return nil, err
+	}
+
+	s.eventBus.Publish(applicationevents.TaskUpdated, updatedTask)
+	return updatedTask, nil
 }
