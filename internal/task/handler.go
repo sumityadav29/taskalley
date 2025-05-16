@@ -3,6 +3,7 @@ package task
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -18,6 +19,7 @@ func NewHandler(service Service) *Handler {
 func (h *Handler) RegisterRoutes(r chi.Router) {
 	r.Route("/api/v1/projects/{projectId}/tasks", func(r chi.Router) {
 		r.Post("/", h.Create)
+		r.Get("/", h.GetAllByProject)
 	})
 }
 
@@ -46,4 +48,39 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(task)
+}
+
+func (h *Handler) GetAllByProject(w http.ResponseWriter, r *http.Request) {
+	projectId := chi.URLParam(r, "projectId")
+	status := Status(r.URL.Query().Get("status"))
+
+	if projectId == "" {
+		http.Error(w, "projectId is required", http.StatusBadRequest)
+		return
+	}
+
+	start := 0
+	if val := r.URL.Query().Get("start"); val != "" {
+		if parsed, err := strconv.Atoi(val); err == nil {
+			start = parsed
+		}
+	}
+
+	limit := 10
+	if val := r.URL.Query().Get("limit"); val != "" {
+		if parsed, err := strconv.Atoi(val); err == nil {
+			limit = parsed
+		}
+	}
+
+	tasks, err := h.service.GetAllByProject(r.Context(), projectId, status, start, limit)
+
+	if err != nil {
+		http.Error(w, "failed to get tasks: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(tasks)
 }

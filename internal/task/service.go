@@ -3,10 +3,13 @@ package task
 import (
 	"context"
 	"errors"
+
+	"github.com/sumityadav29/taskalley/internal/task/taskfilters"
 )
 
 type Service interface {
 	Create(ctx context.Context, task *TaskCreate, userId string) (*Task, error)
+	GetAllByProject(ctx context.Context, projectId string, status Status, start int, limit int) ([]*Task, error)
 }
 
 type service struct {
@@ -37,4 +40,29 @@ func (s *service) Create(ctx context.Context, task *TaskCreate, userId string) (
 	}
 
 	return s.repo.Create(ctx, task)
+}
+
+func (s *service) GetAllByProject(ctx context.Context, projectId string, status Status, start int, limit int) ([]*Task, error) {
+	if projectId == "" {
+		return nil, errors.New("projectId is required")
+	}
+
+	var filters []taskfilters.TaskFilter
+
+	projectIdFilter := taskfilters.StringMatchTaskFilter{
+		ColumnName:  "project_id",
+		ColumnValue: projectId,
+	}
+
+	filters = append(filters, &projectIdFilter)
+
+	if status != "" {
+		statusFilter := taskfilters.StringMatchTaskFilter{
+			ColumnName:  "status",
+			ColumnValue: string(status),
+		}
+		filters = append(filters, &statusFilter)
+	}
+
+	return s.repo.GetAllByFilters(ctx, filters, start, limit)
 }

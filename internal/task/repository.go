@@ -2,14 +2,16 @@ package task
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/sumityadav29/taskalley/internal/task/taskfilters"
 )
 
 type Repository interface {
 	Create(ctx context.Context, task *TaskCreate) (*Task, error)
-	// GetAllByProject(ctx context.Context, projectId string) ([]*Task, error)
+	GetAllByFilters(ctx context.Context, filters []taskfilters.TaskFilter, start int, limit int) ([]*Task, error)
 	// GetById(ctx context.Context, id string) (*Task, error)
 	// UpdateById(ctx context.Context, id string, task *Task) (*Task, error)
 	// DeleteById(ctx context.Context, id string) error
@@ -54,4 +56,39 @@ func (r *repository) Create(ctx context.Context, task *TaskCreate) (*Task, error
 		CreatedBy:   createdBy,
 		CreatedAt:   createdAt,
 	}, nil
+}
+
+func (r *repository) GetAllByFilters(ctx context.Context, filters []taskfilters.TaskFilter, start int, limit int) ([]*Task, error) {
+	query := `
+		SELECT id, project_id, title, description, status, due_date, created_by, created_at, updated_at FROM tasks
+	`
+	if len(filters) > 0 {
+		query += " WHERE "
+		for i, filter := range filters {
+			query += filter.GetQueryClause()
+			if i < len(filters)-1 {
+				query += " AND "
+			}
+		}
+	}
+
+	query += fmt.Sprintf(" ORDER BY created_at DESC LIMIT %d OFFSET %d", limit, start)
+
+	rows, err := r.db.Query(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	tasks := []*Task{}
+	for rows.Next() {
+		var task Task
+		err := rows.Scan(&task.Id, &task.ProjectId, &task.Title, &task.Description, &task.Status, &task.DueDate, &task.CreatedBy, &task.CreatedAt, &task.UpdatedAt)
+		if err != nil {
+			return nil, err
+		}
+		tasks = append(tasks, &task)
+	}
+
+	return tasks, nil
 }
