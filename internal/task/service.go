@@ -12,6 +12,8 @@ type Service interface {
 	GetAllByProject(ctx context.Context, projectId string, status Status, start int, limit int) ([]*Task, error)
 	GetById(ctx context.Context, id string) (*Task, error)
 	DeleteById(ctx context.Context, id string) error
+	UpdateById(ctx context.Context, id string, task *TaskUpdate) (*Task, error)
+	UpdateStatus(ctx context.Context, id string, status Status) (*Task, error)
 }
 
 type service struct {
@@ -81,4 +83,23 @@ func (s *service) DeleteById(ctx context.Context, id string) error {
 		return errors.New("id is required")
 	}
 	return s.repo.DeleteById(ctx, id)
+}
+
+func (s *service) UpdateById(ctx context.Context, id string, task *TaskUpdate) (*Task, error) {
+	if id == "" {
+		return nil, errors.New("id is required")
+	}
+	return s.repo.UpdateById(ctx, id, task)
+}
+
+func (s *service) UpdateStatus(ctx context.Context, id string, status Status) (*Task, error) {
+	if id == "" {
+		return nil, errors.New("id is required")
+	}
+
+	if status == "" {
+		return nil, errors.New("status is required")
+	}
+
+	return s.repo.UpdateStatus(ctx, id, status)
 }

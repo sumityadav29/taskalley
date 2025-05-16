@@ -13,7 +13,8 @@ type Repository interface {
 	Create(ctx context.Context, task *TaskCreate) (*Task, error)
 	GetAllByFilters(ctx context.Context, filters []taskfilters.TaskFilter, start int, limit int) ([]*Task, error)
 	GetById(ctx context.Context, id string) (*Task, error)
-	// UpdateById(ctx context.Context, id string, task *Task) (*Task, error)
+	UpdateById(ctx context.Context, id string, task *TaskUpdate) (*Task, error)
+	UpdateStatus(ctx context.Context, id string, status Status) (*Task, error)
 	DeleteById(ctx context.Context, id string) error
 }
 
@@ -118,4 +119,51 @@ func (r *repository) DeleteById(ctx context.Context, id string) error {
 		return err
 	}
 	return nil
+}
+
+func (r *repository) UpdateById(ctx context.Context, id string, task *TaskUpdate) (*Task, error) {
+	oldTask, err := r.GetById(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	title := task.Title
+	if title == "" {
+		title = oldTask.Title
+	}
+
+	description := task.Description
+	if description == "" {
+		description = oldTask.Description
+	}
+
+	_, err = r.db.Exec(ctx, `
+		UPDATE tasks SET title = $1, description = $2 WHERE id = $3
+	`, title, description, id)
+
+	if err != nil {
+		return nil, err
+	}
+
+	updatedTask, err := r.GetById(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	return updatedTask, nil
+}
+
+func (r *repository) UpdateStatus(ctx context.Context, id string, status Status) (*Task, error) {
+	_, err := r.db.Exec(ctx, `
+		UPDATE tasks SET status = $1 WHERE id = $2 AND is_deleted = false
+	`, status, id)
+	if err != nil {
+		return nil, err
+	}
+
+	updatedTask, err := r.GetById(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	return updatedTask, nil
 }

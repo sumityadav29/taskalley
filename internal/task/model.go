@@ -29,3 +29,8 @@ type TaskCreate struct {
 	DueDate     time.Time `json:"dueDate"`
 	CreatedBy   string    `json:"createdBy"`
 }
+
+type TaskUpdate struct {
+	Title       string `json:"title"`
+	Description string `json:"description"`
+}

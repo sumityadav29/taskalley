@@ -159,6 +159,33 @@ paths:
       responses:
         204:
           description: Task deleted
+  
+  /api/v1/projects/{projectId}/tasks/{taskId}/status:
+    patch:
+      tags:
+        - Tasks
+      summary: Update the status of a task
+      parameters:
+        - in: path
+          name: projectId
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: taskId
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: status
+          required: true
+          schema:
+            type: string
+            enum: [TODO, IN_PROGRESS, COMPLETED]
+      responses:
+        200:
+          description: Task status updated
+
 
 components:
   schemas:
@@ -194,6 +221,8 @@ components:
       properties:
         id:
           type: string
+        projectId:
+          type: string
         title:
           type: string
         description:
@@ -221,6 +250,8 @@ components:
           type: string
         description:
           type: string
+        projectId:
+          type: string
         status:
           type: string
           enum: [TODO, IN_PROGRESS, COMPLETED]
@@ -237,13 +268,3 @@ components:
           type: string
         description:
           type: string
-        status:
-          type: string
-          enum: [TODO, IN_PROGRESS, COMPLETED]
-        createdBy:
-          type: string
-        dueDate:
-          type: string
-          format: date-time
-
-

@@ -24,6 +24,10 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 	r.Route("/api/v1/projects/{projectId}/tasks/{taskId}", func(r chi.Router) {
 		r.Get("/", h.GetById)
 		r.Delete("/", h.DeleteById)
+		r.Patch("/", h.UpdateById)
+	})
+	r.Route("/api/v1/projects/{projectId}/tasks/{taskId}/status", func(r chi.Router) {
+		r.Patch("/", h.UpdateStatus)
 	})
 }
 
@@ -125,4 +129,57 @@ func (h *Handler) DeleteById(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
+}
+
+func (h *Handler) UpdateById(w http.ResponseWriter, r *http.Request) {
+	taskId := chi.URLParam(r, "taskId")
+
+	if taskId == "" {
+		http.Error(w, "taskId is required", http.StatusBadRequest)
+		return
+	}
+
+	var taskUpdate TaskUpdate
+
+	if err := json.NewDecoder(r.Body).Decode(&taskUpdate); err != nil {
+		http.Error(w, "invalid request payload: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	task, err := h.service.UpdateById(r.Context(), taskId, &taskUpdate)
+
+	if err != nil {
+		http.Error(w, "failed to update task: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(task)
+}
+
+func (h *Handler) UpdateStatus(w http.ResponseWriter, r *http.Request) {
+	taskId := chi.URLParam(r, "taskId")
+	status := Status(r.URL.Query().Get("status"))
+
+	if taskId == "" {
+		http.Error(w, "taskId is required", http.StatusBadRequest)
+		return
+	}
+
+	if status == "" {
+		http.Error(w, "status is required", http.StatusBadRequest)
+		return
+	}
+
+	task, err := h.service.UpdateStatus(r.Context(), taskId, status)
+
+	if err != nil {
+		http.Error(w, "failed to update task status: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(task)
 }
